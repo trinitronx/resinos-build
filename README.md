@@ -9,7 +9,6 @@ This started out as a test to see if I could build [resin-os/resin-raspberrypi@s
 Anyway, the `Dockerfile` is included and is set to check out the `switch_board_to_morty` branch of resin-os/resin-raspberrypi .  It then generates a fresh `build/` directory for `bitbake`, and patches on top of these files for various fixes required to build according to the checked out state of all the submodule bitbake layer repos.
 
 The build host was tested on a CoreOS EC2 instance with the following config:
- - **Vol Type:** `io1`
 
 | AWS Setting  | Value                                                                                              |
 |--------------|----------------------------------------------------------------------------------------------------|
