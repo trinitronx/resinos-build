@@ -24,6 +24,8 @@ The build host was tested on a CoreOS EC2 instance with the following config:
 
 If building on a large instance type with many CPU cores (as returned by `nproc`), you will probably want to tune down the `BB_NUMBER_THREADS` setting.  You will probably run into a Network-bound limit on the number of concurrent source downloads that you are able to simultaneously download.  I had decent luck with `BB_NUMBER_THREADS=24`, but depending on your instance type and network traffic for when you kick off a build, this may be too many.  Tune it down until downloads stop failing.  Once your `build/downloads` has all the sources downloaded, you can probably turn `BB_NUMBER_THREADS` back up to `nproc * 4`.
 
+You may wish to first run `bitbake -c fetchall resin-image` with `BB_NUMBER_THREADS = "$(nproc)"`, then run the next build with the original setting.
+
 The `PARALLEL_MAKE` setting defaults to `nproc`. On my system it was `"-j 8"`.
 
 [1]: https://github.com/resin-os/resin-raspberrypi/pull/76/files
