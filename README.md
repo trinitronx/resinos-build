@@ -22,10 +22,38 @@ The build host was tested on a CoreOS EC2 instance with the following config:
 `bitbake` Tuning
 ----------------
 
-If building on a large instance type with many CPU cores (as returned by `nproc`), you will probably want to tune down the `BB_NUMBER_THREADS` setting.  You will probably run into a Network-bound limit on the number of concurrent source downloads that you are able to simultaneously download.  I had decent luck with `BB_NUMBER_THREADS=24`, but depending on your instance type and network traffic for when you kick off a build, this may be too many.  Tune it down until downloads stop failing.  Once your `build/downloads` has all the sources downloaded, you can probably turn `BB_NUMBER_THREADS` back up to `nproc * 4`.
+The `PARALLEL_MAKE` setting defaults to `nproc`. On my system it was `"-j 8"`.  If building on a large instance type with many CPU cores (as returned by `nproc`), you will probably want to tune down the `BB_NUMBER_THREADS` setting.  You will probably run into a Network-bound limit on the number of concurrent source downloads that you are able to simultaneously download.  I had decent luck with `BB_NUMBER_THREADS=24`, but depending on your instance type, memory, and network traffic for when you kick off a build, this may be too many.  Tune it down until downloads stop failing.  Once your `build/downloads` has all the sources downloaded, you can probably turn `BB_NUMBER_THREADS` back up to `nproc * 4`.
 
-You may wish to first run `bitbake -c fetchall resin-image` with `BB_NUMBER_THREADS = "$(nproc)"`, then run the next build with the original setting.
 
-The `PARALLEL_MAKE` setting defaults to `nproc`. On my system it was `"-j 8"`.
+You may wish to first run `bitbake -c fetchall resin-image` with `BB_NUMBER_THREADS = "$(nproc)"`, then run the next build with the original setting.  This may still be too much depending on how much memory your system has.  If you see [errors like this][2]:
+
+```
+ERROR: Worker process (32666) exited unexpectedly (-9), shutting down...
+ERROR: Worker process (32666) exited unexpectedly (-9), shutting down...
+ERROR: Worker process (32666) exited unexpectedly (-9), shutting down...
+ERROR: Worker process (32666) exited unexpectedly (-9), shutting down...
+WARNING: /tmp/yocto-autobuilder/yocto-autobuilder/yocto-worker/nightly-x86-64-lsb/build/bitbake/lib/bb/runqueue.py:1159: ResourceWarning: unclosed file <_io.BufferedWriter name=35>
+  self.worker = {}
+
+NOTE: Sending SIGTERM to remaining 7 tasks
+NOTE: Sending SIGTERM to remaining 7 tasks
+NOTE: Sending SIGTERM to remaining 7 tasks
+NOTE: Sending SIGTERM to remaining 7 tasks
+NOTE: Tasks Summary: Attempted 5938 tasks of which 1385 didn't need to be rerun and all succeeded.
+NOTE: Writing buildhistory
+
+Summary: There were 3 WARNING messages shown.
+Summary: There were 5 ERROR messages shown, returning a non-zero exit code.
+program finished with exit code 1
+
+## And in your syslog or journald logs, you see:
+$ journalctl -xn1000
+Feb 21 16:01:15 ip-12-34-56-78.ec2.internal kernel: Out of memory: Kill process 27228 (Cooker) score 15 or sacrifice child
+Feb 21 16:01:15 ip-12-34-56-78.ec2.internal kernel: Killed process 27247 (Worker) total-vm:219616kB, anon-rss:90192kB, file-rss:8244kB, shmem-rss:0k
+```
+
+Then, you are getting OOM (Out of memory) errors somewhere during the build.  You may want to tune down the default `BB_NUMBER_THREADS`, use a [different instance size][3] (Try the memory optimized instances such as `m4.2xlarge` or perhaps a larger RAM to CPU ratio).
 
 [1]: https://github.com/resin-os/resin-raspberrypi/pull/76/files
+[2]: http://www.variwiki.com/index.php?title=VAR-SOM-MX6_Yocto_Common_Errors#Unexpected_Error
+[3]: http://www.ec2instances.info/?selected=m4.2xlarge,c4.2xlarge,r4.2xlarge,r3.2xlarge,m1.xlarge
