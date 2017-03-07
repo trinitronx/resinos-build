@@ -38,7 +38,7 @@ RUN sed -i  -e 's/^# \(en_US.UTF-8.*\)/\1/' /etc/locale.gen ; \
     dpkg-reconfigure locales && locale-gen "en_US.UTF-8"
 
 ARG RESINOS_BOARD=raspberrypi
-ARG RESINOS_BRANCH=switch_board_to_morty
+ARG RESINOS_BRANCH=master
 ARG RESINOS_MACHINE=raspberrypi3
 
 RUN git clone https://github.com/resin-os/resin-${RESINOS_BOARD}.git /src/resin-${RESINOS_BOARD} && \
