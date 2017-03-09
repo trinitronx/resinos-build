@@ -97,6 +97,8 @@ RUN printf '# add support for the rpi3\n# kernel: Bump to 4.4.38\nRPIFW_SRCREV =
 # Must run with VOLUMES, and dockerd /proc/PID must be accessible from the host for docker-disk bb recipe to work:
 # -v /var/run/docker.sock:/var/run/docker.sock -v /var/run/docker.pid:/var/run/docker.pid -v /sys/fs/cgroup:/sys/fs/cgroup
 
+ADD ./bin /src/resin-raspberrypi/build-helper-bin
+
 # BUILD IT!
 # docker run -ti -v /var/run/docker.sock:/var/run/docker.sock -v /var/run/docker.pid:/var/run/docker.pid -v /sys/fs/cgroup:/sys/fs/cgroup  --privileged --pid=host  trinitronx/resinos-build:morty /bin/bash
 ## resin/armv7hf-debian
