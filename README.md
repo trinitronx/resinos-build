@@ -6,7 +6,7 @@ My attempt at getting an ARM-based build of ResinOS working inside a Docker cont
 
 This started out as a test to see if I could build [resin-os/resin-raspberrypi@switch_board_to_morty][1] for the Raspberry Pi 3 inside a Docker container.  It ended up being a messy `sed` patch job on top of this branch, because it did not build out of the box, and is probably not yet ready for prime time.
 
-Anyway, the `Dockerfile` is included and is set to check out the `switch_board_to_morty` branch of resin-os/resin-raspberrypi .  It then generates a fresh `build/` directory for `bitbake`, and patches on top of these files for various fixes required to build according to the checked out state of all the submodule bitbake layer repos.
+Anyway, the `Dockerfile` is included and is now set to check out the `master` branch of resin-os/resin-raspberrypi .  It then generates a fresh `build/` directory for `bitbake`, and patches on top of these files various fixes required to build according to the checked out state of all the submodule bitbake layer repos.  Ideally, these patches should be unnecessary to build and I hope to remove them at some point.
 
 The build host was tested on a CoreOS EC2 instance with the following config:
 
