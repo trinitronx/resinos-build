@@ -7,6 +7,7 @@ WORKDIR /src/
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG PKG_DEPENDENCIES="build-essential gcc-multilib python-software-properties locales curl xz-utils git jq diffstat texinfo gawk chrpath wget cpio unzip file pkg-config libsdl1.2-dev xterm"
+ARG DOCKER_GID=233
 
 RUN apt-get update && apt-get -y install $PKG_DEPENDENCIES && \
     curl -sL https://deb.nodesource.com/setup_7.x | bash - && \
@@ -31,7 +32,7 @@ RUN curl -Ls -o - https://get.docker.com/ | bash -s
 
 RUN apt-get -y install sudo && \
     sed -i -e 's/^Defaults.*requiretty/Defaults    !requiretty/' -e 's/^%sudo.*ALL$/%sudo    ALL=(ALL)    NOPASSWD: ALL/' /etc/sudoers
-RUN useradd -ms /bin/bash bitbake && getent group docker || groupadd docker && usermod -aG docker,sudo bitbake
+RUN useradd -ms /bin/bash bitbake && getent group docker || groupadd --gid $DOCKER_GID docker && usermod -aG docker,sudo bitbake && groupmod --gid $DOCKER_GID docker
 
 RUN sed -i  -e 's/^# \(en_US.UTF-8.*\)/\1/' /etc/locale.gen ; \
     dpkg-reconfigure locales && locale-gen "en_US.UTF-8"
