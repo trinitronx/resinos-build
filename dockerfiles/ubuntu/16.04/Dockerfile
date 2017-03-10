@@ -73,19 +73,20 @@ RUN ./resin-yocto-scripts/build/barys --dry-run --remove-build --machine $RESINO
 RUN sed -i -e '/SUPERVISOR_REPOSITORY_armv7a/aSUPERVISOR_REPOSITORY_armv7l = "resin/armv7hf-supervisor"\nSUPERVISOR_REPOSITORY_arm = "resin/armv7hf-supervisor"' ./layers/meta-resin/meta-resin-common/recipes-containers/docker-disk/docker-resin-supervisor-disk.bb
 RUN sed -i -e  '/#MACHINE ?= "raspberrypi3"/a TARGET_ARCH = "arm"\nBUILD_ARCH = "arm"\nMACHINE = "raspberrypi3"\nDEVELOPMENT_IMAGE = "1"\nUNINATIVE_TARBALL = "x86_64-nativesdk-libc.tar.bz2"\nUNINATIVE_CHECKSUM[arm] = "101ff8f2580c193488db9e76f9646fb6ed38b65fb76f403acb0e2178ce7127ca"\n' build/conf/local.conf
 
-# Set Parallelism for bitbake based on nproc
+# Use default Parallelism settings for bitbake based on nproc / python @oe.utils.cpu_count()
 # Make jobs = -j `nproc`
-# BB Threads = `nproc` * 4
-RUN sed -i -e "/#MACHINE ?= \"raspberrypi3\"/a PARALLEL_MAKE = \"-j $(nproc)\"\nBB_NUMBER_THREADS = \"$(let n=$(nproc); let n*=4; echo $n)\"\n" build/conf/local.conf
-
-# Port hardcoded kernel version patches from jethro (Yocto Project 2.1) to morty (Yocto Project 2.2)
-# Change: linux-raspberrypi-4.1 -> linux-raspberrypi-4.4
-# Reference:
-#    https://wiki.yoctoproject.org/wiki/Linux_Yocto
-#
-RUN mv /src/resin-raspberrypi/layers/meta-resin-raspberrypi/recipes-kernel/linux/linux-raspberrypi_4.1.bbappend /src/resin-raspberrypi/layers/meta-resin-raspberrypi/recipes-kernel/linux/linux-raspberrypi_4.4.bbappend && \
-    sed -i -e 's/FILESEXTRAPATHS_prepend := "\${THISDIR}\/linux-raspberrypi-4\.1:"/FILESEXTRAPATHS_prepend := "${THISDIR}\/linux-raspberrypi-4.4:"/' /src/resin-raspberrypi/layers/meta-resin-raspberrypi/recipes-kernel/linux/linux-raspberrypi_4.4.bbappend && \
-    mv /src/resin-raspberrypi/layers/meta-resin-raspberrypi/recipes-kernel/linux/linux-raspberrypi-4.1 /src/resin-raspberrypi/layers/meta-resin-raspberrypi/recipes-kernel/linux/linux-raspberrypi-4.4
+# BB Threads = `nproc`
+# Important! DEVELOPMENT_IMAGE must be set to 1 to avoid building docker-disk & docker-resin-supervisor-disk recipes
+# These recipes don't work when running the bitbake build using Docker-in-Docker (mounting /var/run/docker.sock into the container)
+# Reason:  docker-disk* recipes assume that they're not inside a docker container, and are on a host supporting the Docker graphdriver
+#          They launch "docker daemon -g /resin-data/docker -s aufs" after mounting this location as a loopback device in order to pull the resin/armv7hf-supervisor image
+#          Intent seems to be to pre-seed the base OS with an existing docker image pull result.
+#          For our purposes, we don't need the board to contact resin.io, so we put a basic empty ext4 image "resin-data.img" in the bitbake work directory to get the bitbake build working
+#          See:
+#            layers/meta-resin/meta-resin-common/recipes-containers/docker-disk/files/entry.sh
+#          Run the above script manually to create the image, then copy it into the work directory after bitbake fails on docker-custom-disk
+#          cp /export/resin-data.img build/tmp/work/raspberrypi3-poky-linux-gnueabi/docker-custom-disk/1.0-r0/
+RUN sed -i -e "/#MACHINE ?= \"raspberrypi3\"/a DEVELOPMENT_IMAGE = \"1\"\n" build/conf/local.conf
 
 # Update the bcm2835 recipe to use latest release
 # It seems that the previous tag was deleted from the raspberrypi/firmware GitHub repo
